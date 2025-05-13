@@ -1,0 +1,22 @@
+{
+  "name": "aurora-dashboard",
+  "version": "1.0.0",
+  "description": "A one-page website with Aurora background, Google Sheets data, and Spline elements.",
+  "main": "index.html",
+  "scripts": {
+    "dev": "live-server --port=8080 --open=index.html",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "aurora",
+    "dashboard",
+    "threejs",
+    "spline",
+    "google-sheets"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+} 
