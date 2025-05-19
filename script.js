@@ -233,7 +233,7 @@ function parseCSV(csvText) {
         if (values.length === headers.length) {
             const entry = {};
             headers.forEach((header, index) => {
-                let key = header.replace(/\s*\(.*?\)|\$|\%/g, '').replace(/\s+/g, '_');
+                let key = header.replace(/\s*\(.*?\)|\$|\%|\//g, '').replace(/\s+/g, '_');
                 if (key.toLowerCase().startsWith('avg_max_drawdown')) key = 'Avg_Max_Drawdown';
                 else if (key.toLowerCase().startsWith('total_trades')) key = 'Total_Trades';
                 else if (key.toLowerCase().startsWith('total_net_p&l')) key = 'Total_Net_PL';
@@ -241,6 +241,7 @@ function parseCSV(csvText) {
                 else if (key.toLowerCase().startsWith('avg_profit_factor')) key = 'Avg_Profit_Factor';
                 else if (key.toLowerCase().startsWith('avg_win_rate')) key = 'Avg_Win_Rate';
                 else if (key.toLowerCase().startsWith('avg_sharpe_reported')) key = 'Avg_Sharpe';
+                else if (key.toLowerCase().startsWith('ratio_avg_win_loss')) key = 'Ratio_Avg_Win_Loss';
                 entry[key] = values[index];
             });
             data.push(entry);
@@ -250,7 +251,7 @@ function parseCSV(csvText) {
 }
 
 // Order of columns for display in each row
-const columnOrder = ['Bot_Name', 'Avg_Profit_Factor', 'Avg_Win_Rate', 'Total_Net_PL', 'Avg_Max_Drawdown', 'Total_Trades', 'Avg_Sharpe'];
+const columnOrder = ['Bot_Name', 'Avg_Profit_Factor', 'Avg_Win_Rate', 'Total_Net_PL', 'Avg_Max_Drawdown', 'Total_Trades', 'Avg_Sharpe', 'Ratio_Avg_Win_Loss'];
 
 function createDataRow(botData) {
     const row = document.createElement('div');
@@ -277,6 +278,7 @@ function applyFiltersAndDisplay() {
     const totalTradesFilter = parseInt(document.getElementById('filter-total-trades').value) || null;
     const avgSharpeFilter = parseFloat(document.getElementById('filter-avg-sharpe').value) || null;
     const avgProfitFactorFilter = parseFloat(document.getElementById('filter-avg-profit-factor').value) || null;
+    const ratioAvgWinLossFilter = parseFloat(document.getElementById('filter-ratio-avg-win-loss').value) || null;
 
     let filteredData = originalData.filter(bot => {
         let passesMaxDrawdown = true;
@@ -286,8 +288,9 @@ function applyFiltersAndDisplay() {
         const passesTotalTrades = totalTradesFilter === null || parseInt(bot.Total_Trades) >= totalTradesFilter;
         const passesAvgSharpe = avgSharpeFilter === null || parseFloat(bot.Avg_Sharpe) >= avgSharpeFilter;
         const passesAvgProfitFactor = avgProfitFactorFilter === null || parseFloat(bot.Avg_Profit_Factor) >= avgProfitFactorFilter;
+        const passesRatioAvgWinLoss = ratioAvgWinLossFilter === null || parseFloat(bot.Ratio_Avg_Win_Loss) >= ratioAvgWinLossFilter;
         
-        return passesMaxDrawdown && passesTotalTrades && passesAvgSharpe && passesAvgProfitFactor;
+        return passesMaxDrawdown && passesTotalTrades && passesAvgSharpe && passesAvgProfitFactor && passesRatioAvgWinLoss;
     });
 
     // Clear only previous data rows and messages, not the static header
@@ -362,11 +365,13 @@ function setupFilterEventListeners() {
     document.getElementById('filter-total-trades').addEventListener('input', applyFiltersAndDisplay);
     document.getElementById('filter-avg-sharpe').addEventListener('input', applyFiltersAndDisplay);
     document.getElementById('filter-avg-profit-factor').addEventListener('input', applyFiltersAndDisplay);
+    document.getElementById('filter-ratio-avg-win-loss').addEventListener('input', applyFiltersAndDisplay);
     document.getElementById('clear-filters-btn').addEventListener('click', () => {
         document.getElementById('filter-max-drawdown').value = '';
         document.getElementById('filter-total-trades').value = '';
         document.getElementById('filter-avg-sharpe').value = '';
         document.getElementById('filter-avg-profit-factor').value = '';
+        document.getElementById('filter-ratio-avg-win-loss').value = '';
         applyFiltersAndDisplay();
     });
 }
