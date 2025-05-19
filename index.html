@@ -18,6 +18,7 @@
             </div>
             <div class="header-date-range"></div>
             <div class="header-actions">
+                <a href="#" id="btn-expectancy" class="btn-header-action"><i class="fas fa-calculator"></i> Trade Expectancy</a>
                 <a href="https://docs.google.com/spreadsheets/d/1SIw05VDXBJLEJmMMO50I487ZaaxMHiX5A4L5tRL6RLI/edit?usp=sharing" class="btn-daily-log" target="_blank" rel="noopener noreferrer">
                     <i class="fas fa-calendar-day"></i>
                     <span>Daily Log</span>
@@ -26,46 +27,106 @@
         </div>
     </header>
 
-    <div class="filters-container">
-        <p class="filter-note">Data is based on averages when I run the bots.(8MNQ)</p>
-        <div class="filter-group">
-            <label for="filter-max-drawdown"><i class="fas fa-arrow-down"></i> Avg Max Drawdown (&le;)</label>
-            <input type="number" id="filter-max-drawdown" placeholder="e.g., -1000">
+    <div id="main-dashboard-view">
+        <div class="filters-container">
+            <p class="filter-note">Data is based on averages when I run the bots.(8MNQ)</p>
+            <div class="filter-group">
+                <label for="filter-max-drawdown"><i class="fas fa-arrow-down"></i> Avg Max Drawdown (&le;)</label>
+                <input type="number" id="filter-max-drawdown" placeholder="e.g., -1000">
+            </div>
+            <div class="filter-group">
+                <label for="filter-total-trades"><i class="fas fa-exchange-alt"></i> Total Trades (&ge;)</label>
+                <input type="number" id="filter-total-trades" placeholder="e.g., 2000">
+            </div>
+            <div class="filter-group">
+                <label for="filter-avg-sharpe"><i class="fas fa-chart-line"></i> Avg Sharpe (&ge;)</label>
+                <input type="number" step="0.1" id="filter-avg-sharpe" placeholder="e.g., 1.5">
+            </div>
+            <div class="filter-group">
+                <label for="filter-avg-profit-factor"><i class="fas fa-percent"></i> Avg Profit Factor (&ge;)</label>
+                <input type="number" step="0.1" id="filter-avg-profit-factor" placeholder="e.g., 1.2">
+            </div>
+            <div class="filter-group">
+                <label for="filter-ratio-avg-win-loss"><i class="fas fa-balance-scale-right"></i> Ratio Avg W/L (&ge;)</label>
+                <input type="number" step="0.1" id="filter-ratio-avg-win-loss" placeholder="e.g., 1.1">
+            </div>
+            <button id="clear-filters-btn"><i class="fas fa-times-circle"></i> Clear Filters</button>
         </div>
-        <div class="filter-group">
-            <label for="filter-total-trades"><i class="fas fa-exchange-alt"></i> Total Trades (&ge;)</label>
-            <input type="number" id="filter-total-trades" placeholder="e.g., 2000">
+        
+        <div class="dashboard-content">
+            <div class="data-header-row">
+                <div class="data-header-cell bot-name-cell">Bot Name</div>
+                <div class="data-header-cell">Avg. Profit Factor</div>
+                <div class="data-header-cell">Avg. Win Rate (%)</div>
+                <div class="data-header-cell">Total Net P&L ($)</div>
+                <div class="data-header-cell">Avg. Max Drawdown ($)</div>
+                <div class="data-header-cell">Total Trades since 5/6</div>
+                <div class="data-header-cell">Avg. Sharpe</div>
+                <div class="data-header-cell">Ratio Avg win / Loss</div>
+            </div>
+            <!-- Data rows will be injected here by script.js -->
         </div>
-        <div class="filter-group">
-            <label for="filter-avg-sharpe"><i class="fas fa-chart-line"></i> Avg Sharpe (&ge;)</label>
-            <input type="number" step="0.1" id="filter-avg-sharpe" placeholder="e.g., 1.5">
-        </div>
-        <div class="filter-group">
-            <label for="filter-avg-profit-factor"><i class="fas fa-percent"></i> Avg Profit Factor (&ge;)</label>
-            <input type="number" step="0.1" id="filter-avg-profit-factor" placeholder="e.g., 1.2">
-        </div>
-        <div class="filter-group">
-            <label for="filter-ratio-avg-win-loss"><i class="fas fa-balance-scale-right"></i> Ratio Avg W/L (&ge;)</label>
-            <input type="number" step="0.1" id="filter-ratio-avg-win-loss" placeholder="e.g., 1.1">
-        </div>
-        <button id="clear-filters-btn"><i class="fas fa-times-circle"></i> Clear Filters</button>
     </div>
-    
-    <div class="dashboard-content">
-        <div class="data-header-row">
-            <div class="data-header-cell bot-name-cell">Bot Name</div>
-            <div class="data-header-cell">Avg. Profit Factor</div>
-            <div class="data-header-cell">Avg. Win Rate (%)</div>
-            <div class="data-header-cell">Total Net P&L ($)</div>
-            <div class="data-header-cell">Avg. Max Drawdown ($)</div>
-            <div class="data-header-cell">Total Trades since 5/6</div>
-            <div class="data-header-cell">Avg. Sharpe</div>
-            <div class="data-header-cell">Ratio Avg win / Loss</div>
+
+    <div id="expectancy-view" class="view-section" style="display:none;">
+        <div class="expectancy-container">
+            <section class="expectancy-section settings-section">
+                <h2><i class="fas fa-cogs"></i> Settings</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="exp-start-balance">Start balance, $</label>
+                        <input type="number" id="exp-start-balance" value="50000">
+                    </div>
+                    <div class="form-group">
+                        <label for="exp-num-trades">Number of trades</label>
+                        <input type="number" id="exp-num-trades" value="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="exp-typical-risk">Typical risk, %</label>
+                        <input type="number" step="0.1" id="exp-typical-risk" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="exp-risk-reward">Risk:Reward (1:X)</label>
+                        <input type="number" step="0.1" id="exp-risk-reward" value="2">
+                    </div>
+                    <div class="form-group">
+                        <label for="exp-win-loss">Win/Loss, %</label>
+                        <input type="number" step="1" id="exp-win-loss" value="50">
+                    </div>
+                    <div class="form-group bot-selector-group">
+                        <label for="exp-bot-select">Select Bot (Optional)</label>
+                        <select id="exp-bot-select"><option value="">-- Manual --</option></select>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button id="exp-calculate-btn" class="btn-primary"><i class="fas fa-play-circle"></i> Calculate</button>
+                    <button id="exp-clear-btn" class="btn-secondary"><i class="fas fa-eraser"></i> Clear All</button>
+                </div>
+            </section>
+
+            <section class="expectancy-section results-section">
+                <h2><i class="fas fa-poll"></i> Result of calculation</h2>
+                <div class="results-grid">
+                    <p>Account start, $: <span id="res-account-start">N/A</span></p>
+                    <p>Avg. gain per trade, %: <span id="res-avg-gain-trade-pct">N/A</span></p>
+                    <p>End balance, $: <span id="res-end-balance">N/A</span></p>
+                    <p>Return of investment, %: <span id="res-roi-pct">N/A</span></p>
+                    <p>Number of trades, qty: <span id="res-num-trades">N/A</span></p>
+                    <p>Profitable trades, qty: <span id="res-profitable-trades">N/A</span></p>
+                    <p>Losing trades, qty: <span id="res-losing-trades">N/A</span></p>
+                    <p>Max Drawdown, $: <span id="res-max-drawdown-abs">N/A</span></p>
+                    <p>Max Drawdown, %: <span id="res-max-drawdown-pct">N/A</span></p>
+                </div>
+            </section>
         </div>
-        <!-- Data rows will be injected here by script.js -->
+        <section class="expectancy-section graph-section">
+            <h2><i class="fas fa-chart-area"></i> Trade Return Curve Graph</h2>
+            <canvas id="expectancy-chart"></canvas>
+        </section>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/simplex-noise@4.0.1/dist/esm/simplex-noise.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script type="module" src="script.js"></script>
 </body>
 </html> 

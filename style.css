@@ -2,7 +2,7 @@ body {
     margin: 0;
     font-family: 'Poppins', sans-serif;
     color: white; /* Default text color, can be adjusted */
-    overflow: hidden; /* Hide scrollbars as canvas is fixed */
+    overflow-x: hidden; /* Allow vertical scroll, prevent horizontal */
 }
 
 .content--canvas {
@@ -267,4 +267,247 @@ canvas {
     height: 100%;
     display: block; /* Remove extra space below canvas */
     z-index: -1; /* Explicitly set z-index here as a fallback */
+}
+
+/* Header Action Buttons */
+.btn-header-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 30px;
+    padding: 8px 16px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.btn-header-action:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-header-action i {
+    font-size: 1rem;
+}
+
+/* View Styling */
+.view-section {
+    padding: 20px; /* General padding for content */
+    /* padding-top: 100px; Removed, will be handled by child container if needed or by fixed header not overlapping */
+    color: white;
+    min-height: calc(100vh - 80px); /* Full height minus header, if header is 80px */
+    box-sizing: border-box; /* Ensure padding doesn't add to height for 100vh calcs */
+}
+
+#expectancy-view {
+    /* This view is shown/hidden, its content needs to clear the fixed header */
+    /* We can add padding to its first child or use margin on the container */
+    padding-top: 100px; /* Explicitly set padding top to clear the 80px fixed header + 20px breathing room */
+}
+
+.expectancy-container { /* This holds settings and results */
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Settings and Results side-by-side */
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto 30px auto; /* Centered, with space at bottom before graph */
+}
+
+.expectancy-section {
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 25px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.expectancy-section h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #f0f0f0;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    color: #b0b0b0;
+    margin-bottom: 8px;
+}
+
+.form-group input[type="number"],
+.form-group select {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+}
+
+.button-group {
+    margin-top: 25px;
+    display: flex;
+    gap: 15px;
+}
+
+.button-group .btn-primary,
+.button-group .btn-secondary {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background-color: #ff7eb9; /* Pink to match logo */
+    color: black;
+}
+.btn-primary:hover {
+    background-color: #ffaad5;
+}
+
+.btn-secondary {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.results-grid p {
+    margin: 0 0 12px 0;
+    font-size: 0.95rem;
+    color: #d0d0d0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.results-grid p span {
+    font-weight: 600;
+    color: #f0f0f0;
+}
+
+.graph-section {
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+    height: 350px; /* Added specific height */
+    display: flex; /* Added for canvas sizing */
+    flex-direction: column; /* Added for canvas sizing */
+    max-width: 1200px; /* Added to constrain width */
+    margin-left: auto; /* Added to center */
+    margin-right: auto; /* Added to center */
+}
+
+#expectancy-chart {
+    /* max-width: 100%; Remove if causing issues with flex sizing */
+    /* height: 300px; We'll let the parent dictate and Chart.js handle with responsive:true */
+    flex-grow: 1; /* Added to fill available space in graph-section */
+    min-height: 0; /* Important for flex children to shrink properly if needed */
+}
+
+/* Ensure filters container and dashboard content are part of the main view that can be hidden */
+#main-dashboard-view {
+    /* This div will be shown/hidden */
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+    .expectancy-container {
+        grid-template-columns: 1fr; /* Stack to single column on smaller screens */
+        gap: 20px; /* Adjust gap for single column layout */
+    }
+
+    .header-container {
+        padding: 1rem; /* Reduce padding on smaller headers */
+    }
+
+    .logo {
+        font-size: 1.2rem; /* Adjust logo size */
+    }
+
+    .header-date-range {
+        font-size: 0.75rem; /* Adjust date range font size */
+        /* Consider hiding or repositioning if space is very limited */
+    }
+
+    .btn-header-action,
+    .btn-daily-log {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+    }
+
+    .btn-header-action i,
+    .btn-daily-log i {
+        font-size: 0.9rem;
+    }
+
+    /* Adjust padding for views on mobile */
+    .view-section {
+        padding: 10px;
+    }
+    #expectancy-view {
+        padding-top: 80px; /* Adjust for potentially smaller header or preference */
+    }
+
+    .filters-container {
+        padding: 10px;
+        gap: 10px;
+        top: 65px; /* Adjust sticky position if header height changes */
+    }
+
+    .filter-group input[type="number"] {
+        width: 100%; /* Make filter inputs full width in their group */
+    }
+
+    .dashboard-content {
+        padding-top: 100px; /* Ensure content clears sticky filters */
+        /* Consider if max-height calculation needs adjustment for mobile */
+    }
+
+     /* Make data table cells stack or allow horizontal scroll on mobile */
+    .data-header-row, .data-row {
+        /* This is a more complex problem. For now, let them shrink or overflow. */
+        /* A true mobile-friendly table often requires more significant restructuring */
+        /* or horizontal scrolling capabilities for the table itself. */
+        font-size: 0.8rem; /* Slightly smaller font for table data */
+    }
+
+    .data-header-cell, .data-cell {
+        padding: 6px 8px;
+        /* white-space: normal; */ /* Could allow wrapping but might look messy */
+    }
+
 } 

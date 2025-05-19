@@ -316,6 +316,27 @@ function applyFiltersAndDisplay() {
     }
 }
 
+const expBotSelectEl = document.getElementById('exp-bot-select');
+
+function populateBotSelector() {
+    if (!expBotSelectEl || !originalData || originalData.length === 0) {
+        if (expBotSelectEl) expBotSelectEl.closest('.bot-selector-group').style.display = 'none'; // Hide if no data
+        return;
+    }
+
+    expBotSelectEl.closest('.bot-selector-group').style.display = 'flex'; // Show if data exists
+    expBotSelectEl.innerHTML = '<option value="">-- Manual --</option>'; // Clear previous options but keep manual
+
+    originalData.forEach((bot, index) => {
+        if (bot.Bot_Name) {
+            const option = document.createElement('option');
+            option.value = index; // Use index to easily retrieve bot data later
+            option.textContent = bot.Bot_Name;
+            expBotSelectEl.appendChild(option);
+        }
+    });
+}
+
 async function loadAndDisplaySheetData() {
     const dashboardContent = document.querySelector('.dashboard-content');
     if (!dashboardContent) {
@@ -340,6 +361,7 @@ async function loadAndDisplaySheetData() {
         console.log(`Parsed data successfully. Original records: ${originalData.length}`);
         
         applyFiltersAndDisplay(); 
+        populateBotSelector();
 
     } catch (error) {
         console.error('Failed to load or display sheet data:', error);
@@ -357,6 +379,7 @@ async function loadAndDisplaySheetData() {
             }
         }
         errorMsg.textContent = `Failed to load data: ${error.message}. Check console.`;
+        if (expBotSelectEl) expBotSelectEl.closest('.bot-selector-group').style.display = 'none'; // Hide selector on error
     }
 }
 
@@ -391,6 +414,302 @@ function displayHeaderDateRange() {
     dateRangeElement.textContent = `Data from ${startDate} to ${formattedToday}`;
 }
 
+// --- View Switching Logic ---
+const mainDashboardView = document.getElementById('main-dashboard-view');
+const expectancyView = document.getElementById('expectancy-view');
+const logoBtn = document.querySelector('.site-header .logo'); // Assuming logo acts as dashboard home
+const expectancyBtn = document.getElementById('btn-expectancy');
+
+function showView(viewToShow) {
+    mainDashboardView.style.display = 'none';
+    expectancyView.style.display = 'none';
+    viewToShow.style.display = 'block';
+}
+
+if (logoBtn) {
+    logoBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showView(mainDashboardView);
+    });
+}
+if (expectancyBtn) {
+    expectancyBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showView(expectancyView);
+    });
+}
+
+// --- Trade Expectancy Calculator Logic ---
+const expStartBalanceEl = document.getElementById('exp-start-balance');
+const expNumTradesEl = document.getElementById('exp-num-trades');
+const expTypicalRiskEl = document.getElementById('exp-typical-risk');
+const expRiskRewardEl = document.getElementById('exp-risk-reward');
+const expWinLossEl = document.getElementById('exp-win-loss');
+const expCalculateBtn = document.getElementById('exp-calculate-btn');
+const expClearBtn = document.getElementById('exp-clear-btn');
+
+// Result elements
+const resAccountStartEl = document.getElementById('res-account-start');
+const resAvgGainTradePctEl = document.getElementById('res-avg-gain-trade-pct');
+const resEndBalanceEl = document.getElementById('res-end-balance');
+const resRoiPctEl = document.getElementById('res-roi-pct');
+const resNumTradesEl = document.getElementById('res-num-trades');
+const resProfitableTradesEl = document.getElementById('res-profitable-trades');
+const resLosingTradesEl = document.getElementById('res-losing-trades');
+const resMaxDrawdownAbsEl = document.getElementById('res-max-drawdown-abs');
+const resMaxDrawdownPctEl = document.getElementById('res-max-drawdown-pct');
+
+let expectancyChartInstance = null;
+
+function calculateTradeExpectancy() {
+    const startBalance = parseFloat(expStartBalanceEl.value) || 0;
+    const numTrades = parseInt(expNumTradesEl.value) || 0;
+    const typicalRiskPct = parseFloat(expTypicalRiskEl.value) || 0;
+    const riskRewardRatio = parseFloat(expRiskRewardEl.value) || 0;
+    const winRatePct = parseFloat(expWinLossEl.value) || 0;
+
+    if (startBalance <= 0 || numTrades <= 0 || typicalRiskPct <= 0 || winRatePct <= 0 || winRatePct > 100 || riskRewardRatio <=0) {
+        alert("Please enter valid positive values for all settings, and win rate between 0-100.");
+        return;
+    }
+
+    const riskPerTradeAbs = startBalance * (typicalRiskPct / 100);
+    const rewardPerTradeAbs = riskPerTradeAbs * riskRewardRatio;
+    const probWin = winRatePct / 100;
+    const probLoss = 1 - probWin;
+
+    let currentBalance = startBalance;
+    let peakBalance = startBalance;
+    let maxDrawdownAbs = 0;
+    let profitableTrades = 0;
+    let losingTrades = 0;
+    const equityCurve = [startBalance];
+
+    for (let i = 0; i < numTrades; i++) {
+        if (Math.random() < probWin) {
+            currentBalance += rewardPerTradeAbs;
+            profitableTrades++;
+        } else {
+            currentBalance -= riskPerTradeAbs;
+            losingTrades++;
+        }
+        equityCurve.push(currentBalance);
+        if (currentBalance > peakBalance) {
+            peakBalance = currentBalance;
+        }
+        const drawdown = peakBalance - currentBalance;
+        if (drawdown > maxDrawdownAbs) {
+            maxDrawdownAbs = drawdown;
+        }
+    }
+
+    const endBalance = currentBalance;
+    const totalGain = endBalance - startBalance;
+    const roiPct = (totalGain / startBalance) * 100;
+    const avgGainPerTrade = totalGain / numTrades;
+    const avgGainPerTradePct = (avgGainPerTrade / startBalance) * 100;
+    const maxDrawdownPct = (maxDrawdownAbs / peakBalance) * 100; // Drawdown based on peak
+
+    // Display results
+    resAccountStartEl.textContent = startBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    resAvgGainTradePctEl.textContent = avgGainPerTradePct.toFixed(2) + '%';
+    resEndBalanceEl.textContent = endBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    resRoiPctEl.textContent = roiPct.toFixed(2) + '%';
+    resNumTradesEl.textContent = numTrades;
+    resProfitableTradesEl.textContent = profitableTrades;
+    resLosingTradesEl.textContent = losingTrades;
+    resMaxDrawdownAbsEl.textContent = maxDrawdownAbs.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    resMaxDrawdownPctEl.textContent = maxDrawdownPct.toFixed(2) + '%';
+
+    // Update chart
+    console.log("Attempting to update chart...");
+    const chartLabels = Array.from({ length: numTrades + 1 }, (_, i) => i);
+    const canvasElement = document.getElementById('expectancy-chart');
+
+    if (!canvasElement) {
+        console.error("ERROR: Canvas element #expectancy-chart NOT FOUND!");
+        return;
+    }
+    console.log("Canvas element found:", canvasElement);
+    console.log("Canvas display style:", window.getComputedStyle(canvasElement).display);
+    console.log("Canvas width:", canvasElement.width, "Canvas clientWidth:", canvasElement.clientWidth);
+    console.log("Canvas height:", canvasElement.height, "Canvas clientHeight:", canvasElement.clientHeight);
+
+    if (expectancyChartInstance) {
+        console.log("Destroying previous chart instance.");
+        expectancyChartInstance.destroy();
+    }
+    
+    console.log("Chart labels data:", chartLabels.slice(0,5)); // Log first 5 labels
+    console.log("Equity curve data:", equityCurve.slice(0,5)); // Log first 5 data points
+
+    try {
+        const ctx = canvasElement.getContext('2d');
+        if (!ctx) {
+            console.error("ERROR: Failed to get 2D context from canvas!");
+            return;
+        }
+        console.log("2D context obtained successfully.");
+
+        expectancyChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'Account Balance',
+                    data: equityCurve,
+                    borderColor: '#ff7eb9', 
+                    backgroundColor: 'rgba(255, 126, 185, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.2, 
+                    pointRadius: 0, 
+                    pointHoverRadius: 5, 
+                    pointBackgroundColor: '#ff7eb9',
+                    fill: true 
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { 
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: { 
+                            color: '#9ca3af', 
+                            font: { family: 'Poppins', size: 10 },
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        },
+                        grid: { 
+                            color: 'rgba(255, 255, 255, 0.05)', 
+                            drawBorder: false 
+                        }
+                    },
+                    x: {
+                        ticks: { 
+                            color: '#9ca3af', 
+                            font: { family: 'Poppins', size: 10 },
+                            maxRotation: 0, 
+                            minRotation: 0
+                        },
+                        grid: { 
+                            display: false, 
+                            drawBorder: false 
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        align: 'end',
+                        labels: { 
+                            color: '#e5e7eb', 
+                            font: { family: 'Poppins', size: 12 },
+                            boxWidth: 12,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        enabled: true,
+                        backgroundColor: 'rgba(17, 24, 39, 0.8)', 
+                        titleColor: '#f3f4f6', 
+                        titleFont: { family: 'Poppins', weight: '600', size: 13 },
+                        bodyColor: '#d1d5db', 
+                        bodyFont: { family: 'Poppins', size: 12 },
+                        padding: 10,
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        caretPadding: 10,
+                        caretSize: 6,
+                        cornerRadius: 6,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed.y !== null) {
+                                    label += '$' + context.parsed.y.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+                                }
+                                return label;
+                            },
+                            title: function(tooltipItems) {
+                                return 'Trade #' + tooltipItems[0].label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        console.log("New chart instance created:", expectancyChartInstance);
+    } catch (error) {
+        console.error("ERROR creating chart:", error);
+    }
+}
+
+function handleBotSelectionChange() {
+    const selectedBotIndex = expBotSelectEl.value;
+    if (selectedBotIndex && originalData && originalData[selectedBotIndex]) {
+        const selectedBotData = originalData[selectedBotIndex];
+
+        // Auto-fill Win/Loss %
+        if (selectedBotData.Avg_Win_Rate) {
+            // Assuming Avg_Win_Rate is already in % format, e.g., "55.75%"
+            // We need to strip the "%" and convert to number if it includes it.
+            const winRateStr = String(selectedBotData.Avg_Win_Rate).replace('%','');
+            const winRateNum = parseFloat(winRateStr);
+            if (!isNaN(winRateNum)) {
+                expWinLossEl.value = winRateNum.toFixed(2); // Keep it as a percentage number
+            }
+        } else {
+            expWinLossEl.value = '50'; // Default if not found
+        }
+
+        // Auto-fill Risk:Reward (1:X)
+        // ASSUMPTION: Ratio_Avg_Win_Loss from sheet IS the 'X' value for Risk:Reward
+        if (selectedBotData.Ratio_Avg_Win_Loss) {
+            const rrNum = parseFloat(selectedBotData.Ratio_Avg_Win_Loss);
+            if (!isNaN(rrNum)) {
+                expRiskRewardEl.value = rrNum.toFixed(2);
+            }
+        } else {
+            expRiskRewardEl.value = '2'; // Default if not found
+        }
+
+    } else {
+        // Manual selection or no data, reset to defaults or leave as is for manual input
+        expWinLossEl.value = '50'; 
+        expRiskRewardEl.value = '2';
+    }
+}
+
+if (expBotSelectEl) {
+    expBotSelectEl.addEventListener('change', handleBotSelectionChange);
+}
+
+if(expClearBtn) {
+    expClearBtn.addEventListener('click', () => {
+        expStartBalanceEl.value = '50000';
+        expNumTradesEl.value = '100';
+        expTypicalRiskEl.value = '1';
+        // expRiskRewardEl.value = '2'; // Will be set by handleBotSelectionChange
+        // expWinLossEl.value = '50'; // Will be set by handleBotSelectionChange
+        document.querySelectorAll('.results-grid span').forEach(span => span.textContent = 'N/A');
+        if (expectancyChartInstance) expectancyChartInstance.destroy();
+        expectancyChartInstance = null; 
+        expBotSelectEl.value = ''; // Reset bot selector to "-- Manual --"
+        handleBotSelectionChange(); // Call to reset WinRate/RR to defaults for "-- Manual --"
+    });
+}
+
+if (expCalculateBtn) {
+    expCalculateBtn.addEventListener('click', calculateTradeExpectancy);
+}
+
 // Main setup logic
 function initializeApp() {
     try {
@@ -416,6 +735,8 @@ function initializeApp() {
             }
         }
     }
+
+    showView(mainDashboardView); // Show main dashboard by default
 }
 
 // Make sure the DOM is fully loaded before setting up
